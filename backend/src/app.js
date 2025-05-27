@@ -14,14 +14,14 @@ import authRoutes from './routes/auth/index.js';        // public auth
 import subscriptionRoutes from './routes/subscription/subscriptionRoutes.js';
 import protectedRoutes from './routes/index.js';        // all other /api
 
-import authMiddleware from './middlewares/auth.js';     // your JWT guard
+import {authMiddleware} from './middlewares/auth.js';     // your JWT guard
 
 dotenv.config();
 const app = express();
 
 // Security & Parsing middleware
 app.use(helmet({ crossOriginOpenerPolicy: false }));
-app.use(cors({ origin: 'http://localhost:3000', credentials: true }));
+app.use(cors({ origin: 'http://localhost:5173', credentials: true }));
 app.use('/razorpay/webhook', express.raw({ type: 'application/json' }));
 app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }));

@@ -60,7 +60,7 @@ import {
   getSubscription,
   cancelSubscription,
 } from '../../controllers/subscription/subscriptionController.js';
-import { authMiddleware as protect } from '../../middlewares/authMiddleware.js';
+import { authMiddleware as protect } from '../../middlewares/auth.js';
 
 const router = express.Router();
 
