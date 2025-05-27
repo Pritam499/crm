@@ -1,17 +1,16 @@
-// // src/main.jsx
+import React from "react";
+import ReactDOM from "react-dom/client";
+import { Provider } from "react-redux";
+import App from "./App";
+import store from "./store"; // Make sure path is correct
+import "./index.css"; // Optional if using Tailwind or custom CSS
 
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import './index.css';
-import { Provider } from 'react-redux';
-import { GoogleOAuthProvider } from '@react-oauth/google';
-import store from './redux/store';
-import App from './App'; // Importing the updated App component
-
-ReactDOM.createRoot(document.getElementById('root')).render(
-  <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
-    <Provider store={store}>
-      <App /> {/* Your updated App component with routing */}
-    </Provider>
-  </GoogleOAuthProvider>
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(
+  <Provider store={store}>
+    <App />
+  </Provider>
 );
+
+
+

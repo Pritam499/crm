@@ -5,6 +5,7 @@ import { sequelize } from "../config/db.js";
 export const Report = sequelize.define("Report", {
   id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
   name: { type: DataTypes.STRING, allowNull: false },
+  type:  { type: DataTypes.STRING, allowNull: true },       // NEW
   params: { type: DataTypes.JSONB, allowNull: false },
   result: { type: DataTypes.JSONB },
 }, {
