@@ -1,5 +1,4 @@
-// // src/services/apis.js
-
+// src/services/api.js
 import axios from "axios";
 
 const API = axios.create({
@@ -16,17 +15,17 @@ API.interceptors.request.use(config => {
 API.interceptors.response.use(
   response => response,
   error => {
-    console.error("API Error:", error.response?.data || error.message);
+    console.error("API Error:", error.response?.data?.message || error.message);
     return Promise.reject(error);
   }
 );
 
 export const auth = {
-  sendOtp:   data => API.post("/auth/send-otp", data),
+  sendOtp: data => API.post("/auth/send-otp", data),
   verifyOtp: data => API.post("/auth/verify-otp", data),
   resendOtp: data => API.post("/auth/resend-otp", data),
-  logout:    ()   => API.post("/auth/logout"),
-  me:        ()   => API.get("/auth/me"),
+  logout: () => API.post("/auth/logout"),
+  me: () => API.get("/auth/me"),
 };
 
 export const leads = {
@@ -44,6 +43,23 @@ export const contacts = {
   update:    (id, data)    => API.put(`/contacts/${id}`, data),
   delete:    id            => API.delete(`/contacts/${id}`),
 };
+
+export const accounts = {
+  fetchAll:  ()            => API.get("/accounts"),
+  fetchById: id            => API.get(`/accounts/${id}`),
+  create:    data          => API.post("/accounts", data),
+  update:    (id, data)    => API.put(`/accounts/${id}`, data),
+  delete:    id            => API.delete(`/accounts/${id}`),
+};
+
+export const opportunities = {
+  fetchAll:  ()            => API.get("/opportunities"),
+  fetchById: id            => API.get(`/opportunities/${id}`),
+  create:    data          => API.post("/opportunities", data),
+  update:    (id, data)    => API.put(`/opportunities/${id}`, data),
+  delete:    id            => API.delete(`/opportunities/${id}`),
+};
+
 
 export const tasks = {
   fetchAll:  ()            => API.get("/tasks"),

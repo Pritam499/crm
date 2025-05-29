@@ -1,175 +1,115 @@
 // src/components/Auth/OtpForm.jsx
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { verifyOtp, resendOtp } from "../../store/slices/authSlice.js";
-import Button from "../Shared/Button.jsx";
+import { verifyOtp, resendOtp } from "../../store/slices/authSlice";
 
-export default function OtpForm({ email, onVerified, onEditEmail }) {
-  const [otp, setOtp] = useState("");
+export default function OtpForm({ email: initialEmail, onVerified, onEditEmail }) {
   const dispatch = useDispatch();
-  const { status, error, token } = useSelector(s => s.auth);
+  const [email] = useState(initialEmail);
+  const [otp, setOtp] = useState("");
+  const [timer, setTimer] = useState(60);
+  const [errorMessage, setErrorMessage] = useState("");
 
-  const handleSubmit = e => {
-    e.preventDefault();
-    dispatch(verifyOtp({ email, otp }))
-      .unwrap()
-      .then(() => onVerified?.())
-      .catch(() => {});
-  };
+  const loading = useSelector((state) => state.auth.status === "loading");
 
-  const handleResend = () => {
-    dispatch(resendOtp({ email }));
-  };
-
-  // If token already present, immediately call onVerified
   useEffect(() => {
-    if (token && onVerified) {
-      onVerified();
+    if (timer > 0) {
+      const countdown = setTimeout(() => setTimer((t) => t - 1), 1000);
+      return () => clearTimeout(countdown);
     }
-  }, [token, onVerified]);
+  }, [timer]);
+
+  const handleVerify = async (e) => {
+    e.preventDefault();
+    setErrorMessage("");
+
+    if (!otp.trim()) {
+      setErrorMessage("OTP is required");
+      return;
+    }
+
+    try {
+      const result = await dispatch(verifyOtp({ email, otp })).unwrap();
+      if (result) onVerified();
+    } catch (error) {
+      setErrorMessage(error || "Invalid OTP");
+    }
+  };
+
+  const handleResend = async () => {
+    setErrorMessage("");
+    try {
+      await dispatch(resendOtp(email)).unwrap();
+      setTimer(60);
+    } catch (error) {
+      setErrorMessage(error || "Failed to resend OTP");
+    }
+  };
 
   return (
-    <div className="space-y-4 p-6 bg-white rounded shadow w-full max-w-sm">
-      <h2 className="text-2xl font-semibold">Verify OTP</h2>
-
-      <p className="text-sm">Sent to: <strong>{email}</strong></p>
-      <button
-        onClick={onEditEmail}
-        className="text-blue-600 text-xs hover:underline"
+    <div className="min-h-screen flex items-center justify-center bg-sky-800 px-4">
+      <form
+        onSubmit={handleVerify}
+        className="max-w-md w-full bg-white/10 backdrop-blur-md p-8 rounded-xl shadow-lg border border-white/20 text-white"
       >
-        Edit email
-      </button>
+        <h2 className="text-3xl font-extrabold mb-6 text-center bg-gradient-to-r from-sky-300 via-teal-300 to-purple-300 text-transparent bg-clip-text">
+          Verify Your OTP
+        </h2>
 
-      <form onSubmit={handleSubmit} className="space-y-3">
-        <input
-          type="text"
-          value={otp}
-          onChange={e => setOtp(e.target.value)}
-          placeholder="Enter OTP"
-          className="w-full px-3 py-2 border rounded"
-          required
-        />
-
-        <div className="flex justify-between items-center">
-          <Button type="submit" disabled={status === "loading"}>
-            {status === "loading" ? "Verifying..." : "Verify"}
-          </Button>
+        <div className="flex items-center gap-2 mb-4">
+          <input
+            type="email"
+            value={email}
+            readOnly
+            className="flex-1 px-4 py-2 rounded bg-white/20 text-white placeholder-white/70 focus:outline-none"
+          />
           <button
             type="button"
-            onClick={handleResend}
-            className="text-indigo-600 text-sm hover:underline"
-            disabled={status === "loading"}
+            onClick={onEditEmail}
+            className="text-sm text-cyan-300 hover:underline"
           >
-            Resend OTP
+            Edit
           </button>
         </div>
 
-        {status === "error" && <p className="text-red-500">{error}</p>}
+        <input
+          type="text"
+          value={otp}
+          onChange={(e) => setOtp(e.target.value)}
+          placeholder="Enter OTP"
+          className="w-full px-4 py-3 mb-4 rounded-lg bg-white/20 placeholder-white/70 text-white focus:outline-none focus:ring-2 focus:ring-cyan-300"
+          required
+        />
+
+        {errorMessage && (
+          <p className="text-red-400 text-sm mb-4">{errorMessage}</p>
+        )}
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full py-3 mb-4 bg-gradient-to-r from-green-400 via-teal-400 to-cyan-400 rounded-md hover:from-green-500 hover:to-cyan-500 transition disabled:opacity-50"
+        >
+          {loading ? "Verifying…" : "Verify OTP"}
+        </button>
+
+        <div className="text-center text-sm">
+          {timer > 0 ? (
+            <span className="text-white/70">
+              Resend OTP in <strong>{timer}</strong>s
+            </span>
+          ) : (
+            <button
+              type="button"
+              onClick={handleResend}
+              className="text-cyan-300 hover:underline"
+              disabled={loading}
+            >
+              Resend OTP
+            </button>
+          )}
+        </div>
       </form>
     </div>
   );
 }
-
-
-
-// import React, { useEffect, useState } from "react";
-// import { useDispatch, useSelector } from "react-redux";
-// import { verifyOtp } from "../../store/slices/authSlice";
-// import { useNavigate } from "react-router-dom";
-// import Button from "../Shared/Button";
-
-// export default function OtpForm({ email }) {
-//   const [otp, setOtp] = useState("");
-//   const dispatch = useDispatch();
-//   const navigate = useNavigate();
-//   const { status, error, token } = useSelector(state => state.auth);
-
-//   const handleSubmit = e => {
-//     e.preventDefault();
-//     dispatch(verifyOtp({ email, otp }))
-//       .unwrap()
-//       .then(() => {
-//         console.log("OTP verified successfully");
-//         // Don't navigate here — let useEffect handle it
-//       })
-//       .catch(err => {
-//         console.error("OTP verification failed:", err);
-//       });
-//   };
-
-//   // ✅ Automatically navigate after token is set
-//   useEffect(() => {
-//     if (token) {
-//       navigate("/dashboard");
-//     }
-//   }, [token, navigate]);
-
-//   return (
-//     <form onSubmit={handleSubmit} className="space-y-4 p-6 bg-white rounded shadow">
-//       <h2 className="text-2xl font-semibold">Enter OTP</h2>
-//       <input
-//         type="text"
-//         value={otp}
-//         onChange={e => setOtp(e.target.value)}
-//         placeholder="Enter OTP"
-//         className="w-full px-4 py-2 border rounded"
-//         required
-//       />
-//       <Button type="submit">
-//         {status === "loading" ? "Verifying..." : "Verify OTP"}
-//       </Button>
-//       {status === "error" && <p className="text-red-500">{error}</p>}
-//     </form>
-//   );
-// }
-
-
-
-
-
-// import React, { useEffect, useState } from "react";
-// import { useDispatch, useSelector } from "react-redux";
-// import { verifyOtp } from "../../store/slices/authSlice";
-// import { useNavigate } from "react-router-dom";
-// import Button from "../Shared/Button";
-
-// export default function OtpForm({ email }) {
-//   const [otp, setOtp] = useState("");
-//   const dispatch = useDispatch();
-//   const navigate = useNavigate();
-//   const { status, error, token } = useSelector(state => state.auth);
-
-//   const handleSubmit = e => {
-//     e.preventDefault();
-//     dispatch(verifyOtp({ email, otp }))
-//       .unwrap()
-//       .catch(err => {
-//         console.error("OTP verification failed:", err);
-//       });
-//   };
-
-//   // Automatically navigate after token is set
-//   useEffect(() => {
-//     if (token) {
-//       navigate("/dashboard");
-//     }
-//   }, [token, navigate]);
-
-//   return (
-//     <form onSubmit={handleSubmit} className="space-y-4 p-6 bg-white rounded shadow">
-//       <h2 className="text-2xl font-semibold">Enter OTP</h2>
-//       <input
-//         type="text"
-//         value={otp}
-//         onChange={e => setOtp(e.target.value)}
-//         placeholder="Enter OTP"
-//         className="w-full px-4 py-2 border rounded"
-//         required
-//       />
-//       <Button type="submit">
-//         {status === "loading" ? "Verifying..." : "Verify OTP"}
-//       </Button>
-//       {status === "error" && <p className="text-red-500">{error}</p>}
-//     </form>
-//   );
-// }
