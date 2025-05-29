@@ -1,24 +1,24 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import api from "../../services/apis";
+import api from "../../services/api";
 
 // Async Thunks
 export const fetchLeads = createAsyncThunk("leads/fetchAll", async () => {
-  const res = await leads.fetchAll();
+  const res = await api.get("/leads");
   return res.data;
 });
 
 export const createLead = createAsyncThunk("leads/create", async (data) => {
-  const res = await leads.create(data);
+  const res = await api.post("/leads", data);
   return res.data;
 });
 
 export const updateLead = createAsyncThunk("leads/update", async ({ id, data }) => {
-  const res = await leads.update(id, data);
+  const res = await api.put(`/leads/${id}`, data);
   return res.data;
 });
 
 export const deleteLead = createAsyncThunk("leads/delete", async (id) => {
-  await leads.delete(id);
+  await api.delete(`/leads/${id}`);
   return id;
 });
 

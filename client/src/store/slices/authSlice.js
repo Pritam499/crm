@@ -1,97 +1,102 @@
 // src/store/slices/authSlice.js
-
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { auth } from "../../services/apis.js";
+import API from "../../services/api"; // ✅ Import default API instance
 
-// existing thunks…
-export const sendOtp = createAsyncThunk(
-  "auth/sendOtp",
-  async (email, thunkAPI) => {
-    try {
-      await auth.sendOtp({ email });
-      return { email };
-    } catch (err) {
-      return thunkAPI.rejectWithValue(err.response?.data?.message || "OTP send failed");
-    }
-  }
-);
-
-// src/store/slices/authSlice.js
+// Thunks
 export const verifyOtp = createAsyncThunk(
   "auth/verifyOtp",
-  async ({ email, otp }, thunkAPI) => {
-    const res = await auth.verifyOtp({ email, otp });
-    const token = res.data.token;              // token from backend
-    localStorage.setItem("token", token);     // store it HERE
-    return { email, token };
+  async ({ email, otp }, { rejectWithValue }) => {
+    try {
+      const response = await API.post("/auth/verify-otp", { email, otp });
+      localStorage.setItem("token", response.data.token);
+      return response.data.token;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || "Invalid OTP");
+    }
   }
 );
 
-
-// ← NEW: resendOtp thunk
 export const resendOtp = createAsyncThunk(
   "auth/resendOtp",
-  async (email, thunkAPI) => {
+  async (email, { rejectWithValue }) => {
     try {
-      await auth.resendOtp({ email });
-      return { email };
+      await API.post("/auth/resend-otp", { email });
     } catch (err) {
-      return thunkAPI.rejectWithValue(err.response?.data?.message || "OTP resend failed");
+      return rejectWithValue(err.response?.data?.message || "Failed to resend OTP");
     }
   }
 );
 
-export const logoutUser = createAsyncThunk(
-  "auth/logout",
-  async (_, thunkAPI) => {
-    await auth.logout();                     // POST /auth/logout
-    localStorage.removeItem("token");        // remove stored token
-    return true;
-  }
-);
-
-
-// NEW: checkSession
 export const checkSession = createAsyncThunk(
   "auth/checkSession",
-  async (_, thunkAPI) => {
-    const token = localStorage.getItem("token");
-    if (!token) return thunkAPI.rejectWithValue("No token");
+  async (_, { rejectWithValue }) => {
     try {
-      await auth.me();           // GET /api/auth/me
-      return token;
-    } catch (err) {
-      localStorage.removeItem("token");
-      return thunkAPI.rejectWithValue("Session expired");
+      const response = await API.get("/auth/me");
+      return response.data;
+    } catch {
+      return rejectWithValue();
     }
   }
 );
 
-const token = localStorage.getItem("token");
+// Slice
 const authSlice = createSlice({
   name: "auth",
   initialState: {
-    email: "",
-    token: token || null,
-    status: "idle",     // idle|loading|otpSent|authenticated|checking|error
+    token: localStorage.getItem("token") || null,
+    status: "idle",
+    user: null,
     error: null,
   },
-  reducers: {},
-  extraReducers: builder => {
+  reducers: {
+    logoutUser(state) {
+      localStorage.removeItem("token");
+      state.token = null;
+      state.user = null;
+    },
+  },
+  extraReducers: (builder) => {
     builder
-      // … other thunks …
-      .addCase(checkSession.pending, state => {
+      .addCase(verifyOtp.pending, (state) => {
+        state.status = "loading";
+      })
+      .addCase(verifyOtp.fulfilled, (state, action) => {
+        state.status = "succeeded";
+        state.token = action.payload;
+        state.error = null;
+      })
+      .addCase(verifyOtp.rejected, (state, action) => {
+        state.status = "failed";
+        state.error = action.payload;
+      })
+
+      .addCase(resendOtp.pending, (state) => {
+        state.status = "loading";
+      })
+      .addCase(resendOtp.fulfilled, (state) => {
+        state.status = "succeeded";
+        state.error = null;
+      })
+      .addCase(resendOtp.rejected, (state, action) => {
+        state.status = "failed";
+        state.error = action.payload;
+      })
+
+      .addCase(checkSession.pending, (state) => {
         state.status = "checking";
       })
-      .addCase(checkSession.fulfilled, (state, { payload }) => {
+      .addCase(checkSession.fulfilled, (state, action) => {
+        state.user = action.payload;
         state.status = "authenticated";
-        state.token = payload;
       })
-      .addCase(checkSession.rejected, state => {
-        state.status = "idle";
+      .addCase(checkSession.rejected, (state) => {
         state.token = null;
+        state.user = null;
+        state.status = "unauthenticated";
       });
-  }
+  },
 });
+
+export const { logoutUser } = authSlice.actions;
 
 export default authSlice.reducer;
