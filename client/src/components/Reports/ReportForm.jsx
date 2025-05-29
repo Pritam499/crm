@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { createReport, updateReport } from "../../store/slices/reportSlice.js";
 import Button from "../Shared/Button.jsx";
