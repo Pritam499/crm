@@ -13,12 +13,14 @@ import taskRoutes from './task/taskRoutes.js';
 import noteRoutes from './note/noteRoutes.js';
 import activityRoutes from './activity/activityRoutes.js';
 import reportRoutes from './report/reportRoutes.js';
+import accountRoutes from './account/accountRoutes.js'
 
 
 // ✅ Fix auth route priorities here
 router.use('/auth', authRouter);
 router.use('/leads', leadRoutes);
 router.use('/contacts', contactRoutes);
+router.use('/accounts', accountRoutes);
 router.use('/opportunities', opportunityRoutes);
 router.use('/tasks', taskRoutes);
 router.use('/notes', noteRoutes);
